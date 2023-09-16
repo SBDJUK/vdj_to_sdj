@@ -1,0 +1,17 @@
+[package]
+name = "vdj_to_sdj"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+id3 = "1.7.0"
+mp4ameta = "0.11.0"
+metaflac = "0.2.5"
+base64 = "0.21.4"
+serde = { version = "1.0", features = ["derive"] }
+serde-xml-rs = "0.6"
+log = "0.4.20"
+env_logger = "0.10"
+clap = { version = "4.4.3", features = ["derive"] }
