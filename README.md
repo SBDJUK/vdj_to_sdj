@@ -6,5 +6,7 @@ This is a rust application that does some limited conversion of metadata from Vi
 Currently this was built for a specific purpose:
 
 VirtualDJ Playcount > Serato DJ Playcount
+
 VirtualDJ Rating > Composer
+
 VirtualDJ User1 > Grouping
