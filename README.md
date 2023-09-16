@@ -1,6 +1,8 @@
-# vdj\_to\_sdj
+# VDJ to SDJ
 
-This is a rust application that does some limited conversion of metadata from VirtualDJ to Serato DJ.
+This is a rust application that does one-way conversion of metadata from VirtualDJ to Serato DJ.
+
+Whilst most fields are standard tag formats, some are not, and so moving between the two applications required some comversion. There are existing applications like Lexicon and ATGR DJCU that can do this for you. Both applications have some limitations, and since I wanted a custom approach I set about creating my own tool to do the conversion exactly how I wanted.
 
 The current version of this application performs a limited conversion of 3 pieces of information:
 
@@ -21,6 +23,7 @@ Command line parameters:
 *   Add OGG support
 *   Handle FLAC and MP4 tags better by creating a tag if the file exists but has no tag
 *   Custom field mapping and combination
+*   Cue points and saved loops
 
 ## Warning
 
