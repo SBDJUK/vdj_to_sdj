@@ -1,12 +1,11 @@
-# vdj_to_sdj
-Convert some VirtualDJ database XML data to Serato-compatible metadata tags
+## vdj\_to\_sdj
 
 This is a rust application that does some limited conversion of metadata from VirtualDJ to Serato DJ.
 
-Currently this was built for a specific purpose:
+The current version of this application performs a limited conversion of 3 pieces of information:
 
-VirtualDJ Playcount > Serato DJ Playcount
+*   VirtualDJ Play Count → Serato DJ Playcount
+*   VirtualDJ Rating → Composer
+*   VirtualDJ User1 → Grouping
 
-VirtualDJ Rating > Composer
-
-VirtualDJ User1 > Grouping
+**It should go without saying that this is a very limited use application - in it's present form it would need to be customized for use, and could absolutely mangle your metadata or destroy your files. Use with caution and backups!**
