@@ -20,6 +20,7 @@ Command line parameters:
 
 ## Current TODO list:
 
+*   Fix media path from database on non-windows platforms
 *   Add OGG support
 *   Handle FLAC and MP4 tags better by creating a tag if the file exists but has no tag
 *   Custom field mapping and combination
