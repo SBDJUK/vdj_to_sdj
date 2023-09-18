@@ -1,5 +1,5 @@
-use id3::{TagLike, Version, frame};
-use crate::common::{ConvertError,get_rating_string};
+use id3::{Tag, TagLike, Version, frame};
+use crate::common::{Config,ConvertError,ConfigBlock,get_rating_string,TrackData};
 
 #[derive(Debug, PartialEq)]
 pub enum FileType {
@@ -8,51 +8,72 @@ pub enum FileType {
     WAV,
 }
 
-pub fn update_id3_tag(filename: &str, id3_type: FileType, playcount: u32, rating: usize, hashtag: &str, simulate: bool) -> Result<(), ConvertError> {
-    let mut tag = if id3_type == FileType::MP3 {
-        match id3::Tag::read_from_path(filename) {
-            Ok(tag) => tag,
-            Err(id3::Error{kind: id3::ErrorKind::NoTag, ..}) => id3::Tag::new(),
-            Err(e) => {
-                return Err(ConvertError::TagReadError(Box::new(e)));
+const SERATO_PLAYCOUNT_FRAME: &str = "SERATO_PLAYCOUNT";
+
+fn get_tag_field(field: &str) -> &str {
+    match field {
+        "Album" => "TALB",
+        "Comment" => "COMM",
+        "Composer" => "TCOM",
+        "Genre" => "TCON",
+        "Grouping" => "TIT1",
+        "Label" => "TPUB",
+        "Remixer" => "TPE4",
+        "Year" => "TDRC",
+        &_ => "????"
+    };
+    "????"
+}
+
+fn process_field(config: &Option<ConfigBlock>, data: &str, tag: &mut Tag) -> bool {
+    match config {
+        Some(block) if block.enabled && !data.is_empty() => {
+            match get_tag_field(&block.target) {
+                "????" => {}
+                target => {
+                    tag.set_text_values(target.to_owned(), [data.to_owned()]);
+                    return true;
+                }
             }
         }
-    } else if id3_type == FileType::AIFF {
-        match id3::Tag::read_from_aiff_path(filename) {
-            Ok(tag) => tag,
-            Err(id3::Error{kind: id3::ErrorKind::NoTag, ..}) => id3::Tag::new(),
-            Err(e) => {
-                return Err(ConvertError::TagReadError(Box::new(e)));
-            }
-        }
-    } else if id3_type == FileType::WAV {
-        match id3::Tag::read_from_wav_path(filename) {
-            Ok(tag) => tag,
-            Err(id3::Error{kind: id3::ErrorKind::NoTag, ..}) => id3::Tag::new(),
-            Err(e) => {
-                return Err(ConvertError::TagReadError(Box::new(e)));
-            }
-        }
-    } else {
-        return Err(ConvertError::UnknownID3File);
+        _ => {}
+    }
+    false
+}
+
+fn read_tag_from_file(filename: &str, id3_type: &FileType) -> Result<Tag, ConvertError> {
+    let tag = match id3_type {
+        FileType::MP3 => Tag::read_from_path(filename),
+        FileType::AIFF => Tag::read_from_aiff_path(filename),
+        FileType::WAV => Tag::read_from_wav_path(filename),
     };
 
-    if playcount > 0 {
-        tag.remove_extended_text(Some("SERATO_PLAYCOUNT"), None);
+    match tag {
+        Ok(tag) => Ok(tag),
+        Err(id3::Error { kind: id3::ErrorKind::NoTag, .. }) => Ok(id3::Tag::new()),
+        Err(e) => Err(ConvertError::TagReadError(Box::new(e))),
+    }
+}
+
+pub fn update_id3_tag(filename: &str, id3_type: FileType, config: &Config, data: TrackData, simulate: bool) -> Result<(), ConvertError> {
+    let mut tag = read_tag_from_file(filename, &id3_type)?;
+
+    if data.playcount > 0 {
+        tag.remove_extended_text(Some(SERATO_PLAYCOUNT_FRAME), None);
         tag.add_frame(frame::ExtendedText{
-            description: "SERATO_PLAYCOUNT".to_owned(),
-            value: format!("{}\0", playcount)
+            description: SERATO_PLAYCOUNT_FRAME.to_owned(),
+            value: format!("{}\0", data.playcount)
         });    
     }
-    if rating > 0 {
-        tag.set_text_values("TCOM",[get_rating_string(rating)]);
-    }
-    if hashtag != "" {
-        tag.set_text_values("TIT1",[hashtag]);
-    }
-    if simulate {
+    let mut changed = Vec::new();
+    changed.push(process_field(&config.rating, &get_rating_string(data.rating), &mut tag));
+    changed.push(process_field(&config.user1, &data.user1, &mut tag));
+    changed.push(process_field(&config.user2, &data.user2, &mut tag));
+
+    if simulate || !changed.iter().any(|&change| change) {
         return Ok(());
     }
+    
     if id3_type == FileType::MP3 {
         tag.write_to_path(filename, Version::Id3v24).map_err(|e| ConvertError::TagWriteError(Box::new(e)))?;
     } else if id3_type == FileType::AIFF {

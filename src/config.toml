@@ -1,0 +1,17 @@
+[playcount]
+enabled = true
+
+[rating]
+enabled = true
+target = "Composer"
+overwrite = true
+
+[user1]
+enabled = true
+target = "Grouping"
+overwrite = true
+
+[user2]
+enabled = false
+target = "Label"
+overwrite = true
