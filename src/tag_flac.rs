@@ -34,14 +34,21 @@ fn process_field(config: &Option<ConfigBlock>, data: &str, tag: &mut Tag) -> boo
     false
 }
 
+fn process_playcount(playcount: u32, tag: &mut Tag) -> bool {
+    if playcount > 0 {
+        let mut pc = playcount.to_string();
+        pc.push('\0');
+        tag.set_vorbis(SERATO_PLAYCOUNT_FRAME.to_owned(), vec!(pc));
+        return true; 
+    }
+    false
+}
+
 pub fn update_flac_tag(filename: &str, config: &Config, data: TrackData, simulate: bool) -> Result<(), ConvertError> {
     let mut tag = Tag::read_from_path(filename).map_err(|e| ConvertError::TagReadError(Box::new(e)))?;
-    if data.playcount > 0 {
-        let mut pc = data.playcount.to_string();
-        pc.push('\0');
-        tag.set_vorbis(SERATO_PLAYCOUNT_FRAME.to_owned(), vec!(pc))
-    }
+
     let mut changed = Vec::new();
+    changed.push(process_playcount(data.playcount, &mut tag));
     changed.push(process_field(&config.rating, &get_rating_string(data.rating), &mut tag));
     changed.push(process_field(&config.user1, &data.user1, &mut tag));
     changed.push(process_field(&config.user2, &data.user2, &mut tag));

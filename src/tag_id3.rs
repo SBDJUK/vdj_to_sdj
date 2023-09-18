@@ -55,17 +55,23 @@ fn read_tag_from_file(filename: &str, id3_type: &FileType) -> Result<Tag, Conver
     }
 }
 
-pub fn update_id3_tag(filename: &str, id3_type: FileType, config: &Config, data: TrackData, simulate: bool) -> Result<(), ConvertError> {
-    let mut tag = read_tag_from_file(filename, &id3_type)?;
-
-    if data.playcount > 0 {
+fn process_playcount(playcount: u32, tag: &mut Tag) -> bool {
+    if playcount > 0 {
         tag.remove_extended_text(Some(SERATO_PLAYCOUNT_FRAME), None);
         tag.add_frame(frame::ExtendedText{
             description: SERATO_PLAYCOUNT_FRAME.to_owned(),
-            value: format!("{}\0", data.playcount)
-        });    
+            value: format!("{}\0", playcount)
+        });
+        return true; 
     }
+    false
+}
+
+pub fn update_id3_tag(filename: &str, id3_type: FileType, config: &Config, data: TrackData, simulate: bool) -> Result<(), ConvertError> {
+    let mut tag = read_tag_from_file(filename, &id3_type)?;
+
     let mut changed = Vec::new();
+    changed.push(process_playcount(data.playcount, &mut tag));
     changed.push(process_field(&config.rating, &get_rating_string(data.rating), &mut tag));
     changed.push(process_field(&config.user1, &data.user1, &mut tag));
     changed.push(process_field(&config.user2, &data.user2, &mut tag));
